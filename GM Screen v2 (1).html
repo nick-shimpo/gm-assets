@@ -1,0 +1,2726 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GM Screen</title>
+<!--
+================================================================
+  HOW TO UPDATE THIS GM SCREEN FOR A NEW SESSION
+  ----------------------------------------------------------------
+  1. Open this file in any text editor.
+  2. Scroll down to the comment block that starts with
+       "EDIT ONLY THIS DATA BLOCK FOR FUTURE SESSIONS"
+  3. Change only the values inside GM_SCREEN_DATA.
+       - Add or remove array entries freely.
+       - Optional fields may be omitted.
+       - The page will redraw itself to fit whatever you put in.
+       - The improv library is a SEPARATE data block called
+         IMPROV_LIBRARY, further down the file. Edit it the
+         same way — only the data, not the rendering below.
+  4. Save the file and open it in a browser.
+  5. Do NOT change anything below the line that says
+       "DO NOT EDIT BELOW THIS LINE UNLESS CHANGING THE TEMPLATE".
+  6. To wipe per-session state (omen positions, roster groups,
+     notes), click the "Reset session state" button in the top
+     right of the page.
+================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fbf8f1;
+    --paper-2: #f0ece2;
+    --ink: #18181b;
+    --ink-dim: #52525b;
+    --ink-faint: #a1a1aa;
+    --hair: #d4d4d8;
+    --hair-strong: #71717a;
+    --accent: #991b1b;
+    --accent-tint: #fef2f2;
+    --accent-2: #7c2d12;
+    --amber: #b45309;
+    --green: #166534;
+    --violet: #6d28d9;
+    --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --radius: 4px;
+    --radius-md: 6px;
+    --radius-pill: 40px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    padding: 36px clamp(20px, 4vw, 48px) 64px;
+    max-width: 1480px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  header.screen-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    padding: 0 0 22px;
+    margin-bottom: 36px;
+    border-bottom: 1px solid var(--hair);
+  }
+  .title-block h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3.6vw, 40px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .title-block .meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .title-block .meta-line .session { color: var(--ink-dim); }
+  .title-block .meta-line .dot { color: var(--hair); }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    background: transparent;
+    border: 1px solid var(--hair);
+    color: var(--ink-dim);
+    padding: 7px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    font-weight: 500;
+  }
+  .btn:hover { border-color: var(--ink); color: var(--ink); }
+  .btn.danger:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.icon {
+    padding: 4px 9px;
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+  .btn.subtle {
+    border-color: transparent;
+    color: var(--ink-faint);
+  }
+  .btn.subtle:hover {
+    border-color: var(--hair);
+    color: var(--ink-dim);
+    background: transparent;
+  }
+
+  /* ---------- Sections ---------- */
+  main.screen-main {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    margin: 0 0 16px;
+    font-weight: 500;
+  }
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .two-col { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  .empty {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+    padding: 4px 0;
+  }
+
+  /* ---------- Truths (compact) ---------- */
+  .truths-section { margin-top: -8px; }
+  .truths-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0;
+    padding: 14px 22px;
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+  }
+  .truth-cell {
+    border-left: 2px solid var(--accent);
+    padding: 2px 18px 2px 14px;
+  }
+  .truth-cell .t-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .truth-cell .t-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  /* ---------- Main view & fold ---------- */
+  .main-view { align-items: start; }
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    min-width: 0;
+  }
+  .fold-divider {
+    border: none;
+    border-top: 1px dashed var(--hair);
+    margin: 8px 0 0;
+    height: 0;
+  }
+
+  /* ---------- Spotlight panel ---------- */
+  .spotlight-panel {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-md);
+    padding: 0;
+    overflow: hidden;
+  }
+  .spotlight-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hair);
+    background: var(--paper-2);
+  }
+  .spotlight-nav {
+    background: transparent;
+    border: 1px solid var(--hair);
+    color: var(--ink-dim);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 14px;
+    display: grid;
+    place-items: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .spotlight-nav:hover { border-color: var(--ink); color: var(--ink); }
+  .spotlight-nav:disabled { opacity: 0.3; cursor: default; }
+  .spotlight-name-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+  .spotlight-kicker {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .spotlight-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--ink);
+    text-align: center;
+    word-break: break-word;
+  }
+  .spotlight-panel[data-pool="true"] .spotlight-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .spotlight-count {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: center;
+    margin-top: 4px;
+  }
+  .spotlight-dots {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    padding: 8px 16px 0;
+  }
+  .spotlight-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--hair);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .spotlight-dot:hover { background: var(--hair-strong); }
+  .spotlight-dot[data-active="true"] { background: var(--accent); }
+  .spotlight-members {
+    list-style: none;
+    margin: 0;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .spotlight-member {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--hair);
+  }
+  .spotlight-member:last-child { border-bottom: none; }
+  .spotlight-member .sm-name {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.15;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+  .spotlight-member[data-status="dead"] .sm-name {
+    text-decoration: line-through;
+    color: var(--ink-faint);
+  }
+  .spotlight-member .sm-type {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .spotlight-member[data-type="PC"] .sm-type { color: var(--ink-dim); }
+  .spotlight-member[data-type="NPC"] .sm-type { color: var(--violet); }
+  .spotlight-member .sm-role {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .spotlight-member .sm-status {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .spotlight-empty {
+    padding: 24px 16px;
+    text-align: center;
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 15px;
+  }
+  .spotlight-hint {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: center;
+    padding: 0 16px 12px;
+  }
+
+  /* ---------- Perils ---------- */
+  .perils-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .peril-row {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .peril-row:hover { border-color: var(--hair-strong); }
+  .peril-row-main {
+    display: grid;
+    grid-template-columns: minmax(180px, 220px) 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 16px 22px;
+  }
+  @media (max-width: 900px) {
+    .peril-row-main {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+  }
+  .peril-name-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .peril-name {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin: 0;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .peril-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .omens-track {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .omens-track .omen {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
+    text-align: left;
+    background: transparent;
+    font-family: inherit;
+    color: inherit;
+    border: none;
+    padding: 0;
+  }
+  .omens-track .omen-past {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    text-decoration: line-through;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+  }
+  .omens-track .omen-past:hover {
+    color: var(--ink-dim);
+    border-color: var(--hair);
+    text-decoration: none;
+  }
+  .omens-track .omen-current {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--accent);
+    background: rgba(153, 27, 27, 0.07);
+    border: 1px solid rgba(153, 27, 27, 0.28);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    letter-spacing: -0.01em;
+  }
+  .omens-track .omen-current:hover {
+    background: rgba(153, 27, 27, 0.13);
+  }
+  .omens-track .omen-current:active { transform: scale(0.985); }
+  .omens-track .omen-future {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 4px 10px;
+    border: 1px dotted var(--hair-strong);
+    border-radius: var(--radius);
+    opacity: 0.65;
+  }
+  .omens-track .omen-future:hover {
+    opacity: 1;
+    border-color: var(--ink-dim);
+    color: var(--ink-dim);
+  }
+  .omens-track .omen.placeholder {
+    font-style: italic;
+  }
+  .omens-track .omen-current.placeholder {
+    color: var(--ink-faint);
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--hair-strong);
+  }
+  .omens-track .omen-note {
+    display: inline-block;
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .omens-track .omen-sep {
+    color: var(--hair-strong);
+    font-size: 10px;
+    user-select: none;
+  }
+
+  .peril-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: end;
+  }
+  .peril-controls .pos {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    min-width: 32px;
+    text-align: center;
+  }
+  .peril-controls .pos .cur { color: var(--ink); font-weight: 500; }
+
+  /* ---------- Entities ---------- */
+  .entities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .entities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+  .entity-card {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    transition: border-color 0.15s;
+  }
+  .entity-card:hover { border-color: var(--hair-strong); }
+  .entity-card[data-status] { opacity: 0.7; }
+  .entity-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .entity-name {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    word-break: break-word;
+    line-height: 1.15;
+  }
+  .entity-descriptor {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-dim);
+  }
+  .entity-status {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-left: auto;
+  }
+  .entity-location {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-left: auto;
+    text-transform: uppercase;
+  }
+  .entity-fields {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 14px;
+    row-gap: 4px;
+    align-items: baseline;
+  }
+  .entity-fields .label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-top: 2px;
+    font-weight: 500;
+  }
+  .entity-fields .value {
+    font-size: 14px;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .entity-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .entity-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding: 2px 8px;
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-pill);
+  }
+  /* ---------- Locations ---------- */
+  .locations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .location-chip {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-pill);
+    padding: 7px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .location-chip:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .location-chip .loc-name {
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--ink);
+    text-transform: none;
+  }
+  .location-chip .loc-tags { display: flex; gap: 6px; }
+  .location-chip .loc-tag { font-size: 9px; color: var(--ink-faint); }
+  .location-chip[data-has-notes="true"] { cursor: help; }
+
+  /* ---------- Roster ---------- */
+  .roster-root {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .roster-group {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .roster-group[data-pool="true"] {
+    background: transparent;
+    border-style: dashed;
+  }
+  .roster-group.drop-target {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .roster-group-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hair);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .roster-group[data-pool="true"] .roster-group-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  .roster-group-title .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .roster-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 24px;
+  }
+  .char-chip {
+    background: var(--bg);
+    border: 1px solid transparent;
+    border-left: 3px solid var(--ink-faint);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.1s, border-color 0.1s, transform 0.06s;
+  }
+  .char-chip:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+  .char-chip:active { cursor: grabbing; }
+  .char-chip.dragging { opacity: 0.4; }
+  .char-chip[data-type="PC"] { border-left-color: var(--ink); }
+  .char-chip[data-type="NPC"] { border-left-color: var(--violet); }
+  .char-chip[data-status="dead"] { border-left-color: var(--accent); opacity: 0.55; }
+  .char-chip .char-name {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.1;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+  .char-chip[data-status="dead"] .char-name { text-decoration: line-through; }
+  .char-chip .char-role {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .char-chip .char-status {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .char-chip .char-type {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    align-self: center;
+  }
+
+  /* ---------- Notes ---------- */
+  #notesArea {
+    width: 100%;
+    min-height: 130px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.55;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  #notesArea:focus {
+    outline: none;
+    border-color: var(--ink-dim);
+  }
+  #notesArea::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  /* ---------- Scrollbar ---------- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--hair); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--hair-strong); }
+
+  /* ---------- Improv Library ---------- */
+  .improv-panel {
+    background: var(--paper);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .improv-quickbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--hair);
+  }
+  .improv-quickbar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-right: 6px;
+  }
+  .improv-quickbar-spacer { flex: 1; }
+  .improv-draw-btn {
+    background: transparent;
+    border: 1px solid var(--hair);
+    color: var(--ink-dim);
+    padding: 7px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    font-weight: 500;
+  }
+  .improv-draw-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .improv-draw-btn.primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .improv-draw-btn.primary:hover {
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .improv-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    border-bottom: 1px solid var(--hair);
+  }
+  @media (max-width: 900px) {
+    .improv-stage { grid-template-columns: 1fr; }
+    .improv-stage .improv-latest { border-right: none; border-bottom: 1px solid var(--hair); }
+  }
+  .improv-latest {
+    padding: 18px 22px 16px;
+    border-right: 1px solid var(--hair);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+  .improv-latest-kicker {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .improv-latest-kicker .sep { color: var(--hair-strong); }
+  .improv-latest-kicker .source { color: var(--accent); }
+  .improv-latest-text {
+    font-family: var(--serif);
+    font-size: 23px;
+    line-height: 1.3;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+  }
+  .improv-latest-text.empty {
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 17px;
+  }
+  .improv-latest-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+  @keyframes improv-flash {
+    0% { background: rgba(153, 27, 27, 0.16); }
+    100% { background: transparent; }
+  }
+  .improv-latest.flash { animation: improv-flash 0.55s ease-out; }
+
+  .improv-pins {
+    padding: 14px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--paper);
+  }
+  .improv-pins-head {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .improv-pins-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .improv-pin {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--hair);
+    border-left: 2px solid var(--amber);
+    border-radius: var(--radius);
+  }
+  .improv-pin-body { flex: 1; min-width: 0; }
+  .improv-pin-kicker {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 2px;
+  }
+  .improv-pin-text {
+    font-family: var(--serif);
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .improv-pin-close {
+    background: transparent;
+    border: none;
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+    align-self: flex-start;
+    line-height: 1;
+  }
+  .improv-pin-close:hover { color: var(--accent); }
+  .improv-pins-empty {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faint);
+    padding: 4px 0;
+  }
+
+  .improv-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 10px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--hair);
+  }
+  .improv-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px 9px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    color: var(--ink-dim);
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+  .improv-tab:hover { color: var(--ink); }
+  .improv-tab[data-active="true"] {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+  .improv-tab-group {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .improv-tab[data-active="true"] .improv-tab-group { color: var(--accent); }
+  .improv-tab[data-group="Mimic"] .improv-tab-group { color: var(--violet); }
+  .improv-tab[data-group="Mimic"][data-active="true"] { border-bottom-color: var(--violet); }
+  .improv-tab[data-group="Mimic"][data-active="true"] .improv-tab-group { color: var(--violet); }
+  .improv-tab[data-group="General Pressure"] .improv-tab-group { color: var(--amber); }
+  .improv-tab[data-group="General Pressure"][data-active="true"] { border-bottom-color: var(--amber); }
+  .improv-tab[data-group="General Pressure"][data-active="true"] .improv-tab-group { color: var(--amber); }
+  .improv-tab-label {
+    font-family: var(--serif);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .improv-body {
+    padding: 18px 22px 22px;
+  }
+  .improv-body-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .improv-body-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .improv-body-title .accent { color: var(--accent); }
+  .improv-body-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Items (list type) */
+  .improv-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 6px;
+  }
+  .improv-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 10px 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .improv-item:hover { border-color: var(--hair-strong); background: var(--paper); }
+  .improv-item.highlighted {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .improv-item-num {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    padding-top: 2px;
+    min-width: 18px;
+  }
+  .improv-item-text {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--serif);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .pin-btn {
+    background: transparent;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+    align-self: flex-start;
+    line-height: 1.2;
+    transition: color 0.15s, transform 0.1s;
+  }
+  .pin-btn:hover { color: var(--amber); transform: scale(1.2); }
+  .pin-btn.pinned { color: var(--amber); }
+
+  /* Moves type */
+  .improv-moves {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 8px;
+  }
+  .improv-move {
+    padding: 12px 12px 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--hair);
+    border-left: 2px solid var(--hair-strong);
+    border-radius: var(--radius);
+    display: flex;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .improv-move:hover { border-color: var(--hair-strong); background: var(--paper); }
+  .improv-move.highlighted {
+    border-color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .improv-move-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .improv-move-name {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .improv-move-use {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    line-height: 1.4;
+  }
+
+  /* Descriptors type */
+  .improv-descriptors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .improv-bank {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .improv-bank-head {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hair);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .improv-bank-roll {
+    background: transparent;
+    border: 1px solid var(--hair);
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .improv-bank-roll:hover { border-color: var(--accent); color: var(--accent); }
+  .improv-bank-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .improv-bank-chip {
+    font-family: var(--serif);
+    font-size: 13px;
+    color: var(--ink);
+    padding: 3px 10px;
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-pill);
+    background: var(--bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .improv-bank-chip:hover { border-color: var(--ink); }
+  .improv-bank-chip.highlighted {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+    color: var(--accent);
+  }
+
+  /* ---------- Utility ---------- */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<header class="screen-header" id="screenHeader"></header>
+
+<main class="screen-main">
+  <section id="truthsSection" class="truths-section">
+    <div id="truthsList" class="truths-bar"></div>
+  </section>
+
+  <div class="main-view two-col">
+    <section id="perilsSection">
+      <h2 class="section-title">Perils</h2>
+      <div id="perilsList" class="perils-list"></div>
+    </section>
+
+    <div class="right-col">
+      <section id="spotlightSection">
+        <h2 class="section-title">Spotlight</h2>
+        <div id="spotlightPanel" class="spotlight-panel"></div>
+      </section>
+      <section id="locationsSection">
+        <h2 class="section-title">Locations</h2>
+        <div id="locationsList" class="locations-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <section id="improvSection">
+    <h2 class="section-title">Improv Library</h2>
+    <div id="improvPanel" class="improv-panel"></div>
+  </section>
+
+  <hr class="fold-divider" aria-hidden="true">
+
+  <section id="entitiesSection">
+    <h2 class="section-title">Entities</h2>
+    <div id="entitiesList" class="entities-list entities-grid"></div>
+  </section>
+
+  <section id="rosterSection">
+    <h2 class="section-title">Roster</h2>
+    <div id="rosterRoot" class="roster-root"></div>
+  </section>
+
+  <section id="notesSection">
+    <h2 class="section-title">Notes</h2>
+    <textarea id="notesArea" placeholder="Quick scratchpad — saved automatically for this session."></textarea>
+  </section>
+</main>
+
+<script>
+/* =========================================================
+   EDIT ONLY THIS DATA BLOCK FOR FUTURE SESSIONS
+   ---------------------------------------------------------
+   Field reference:
+
+   meta:
+     campaignTitle  string  — shown in the header
+     sessionTitle   string  — used to namespace localStorage so
+                              different sessions don't clobber state
+
+   truths[]:
+     title  string
+
+   perils[]:
+     id                string — stable id, used for storage
+     name              string
+     status?           string — small status badge
+     currentOmenIndex  number — zero-based. Omens before this are
+                                "past", at = "current", after = "future".
+     omens[]:
+       text   string  — Wrap in brackets like "[Triggered]" or
+                        "[Undefined]" to render as a muted placeholder.
+       note?  string  — small mono note shown next to the omen
+
+   entities[]:
+     id           string
+     name         string
+     descriptor   string  — italic subtitle ("alien swarm")
+     want         string
+     thinksWith   string
+     status?      string  — small badge (e.g. "dead")
+     location?    string  — short label shown in the head
+     tags?        string[]
+
+   locations[]:
+     id      string
+     name    string
+     tags?   string[]
+     notes?  string  — shown as title-tooltip on hover
+
+   roster:
+     characters[]:
+       id      string
+       name    string
+       type    "PC" | "NPC"
+       role?   string
+       status? string
+     groups[]:
+       id     string
+       name   string
+
+   Optional fields may be omitted. Stable IDs let localStorage
+   state (omen positions, spotlight, roster grouping, notes)
+   carry across reloads.
+   ========================================================= */
+
+const GM_SCREEN_DATA = {
+  meta: {
+    campaignTitle: "Another Bug Hunt",
+    sessionTitle: "Session 01"
+  },
+
+  truths: [
+    { title: "Everything is changing" },
+    { title: "You will die here" },
+    { title: "This will spread" }
+  ],
+
+  perils: [
+    {
+      id: "cure-is-lost",
+      name: "The cure is lost",
+      status: "Active",
+      currentOmenIndex: 0,
+      omens: [
+        { text: "The cure has a name" },
+        { text: "Signs of the cure" },
+        { text: "[Undefined]" }
+      ]
+    },
+    {
+      id: "mimic-is-born",
+      name: "The mimic is born",
+      status: "Active",
+      currentOmenIndex: 2,
+      omens: [
+        { text: "[Triggered]" },
+        { text: "[Triggered]" },
+        { text: "The radiation returns" }
+      ]
+    },
+    {
+      id: "hangar-falls",
+      name: "The hangar falls",
+      status: "Active",
+      currentOmenIndex: 2,
+      omens: [
+        { text: "[Triggered]" },
+        { text: "[Triggered]" },
+        { text: "We’re out of time" }
+      ]
+    },
+    {
+      id: "hinton-ascends",
+      name: "Hinton ascends",
+      status: "Active",
+      currentOmenIndex: 0,
+      omens: [
+        { text: "He wasn’t where he was supposed to be" },
+        { text: "He speaks their language" },
+        { text: "[Undefined]" }
+      ]
+    },
+    {
+      id: "world-breathes-in",
+      name: "The world breathes in",
+      status: "Active",
+      currentOmenIndex: 0,
+      omens: [
+        { text: "The wildlife came in" },
+        { text: "Skin remembers" },
+        { text: "The whispers start" }
+      ]
+    },
+    {
+      id: "dropship-leaves",
+      name: "The dropship leaves without them",
+      status: "Active",
+      currentOmenIndex: 0,
+      omens: [
+        { text: "They’re doing math" },
+        { text: "They’re spinning up" },
+        { text: "Last call" }
+      ]
+    }
+  ],
+
+  entities: [
+    {
+      id: "carcinids",
+      name: "Carcinids",
+      descriptor: "alien swarm",
+      want: "reproduce",
+      thinksWith: "hunger"
+    },
+    {
+      id: "the-mother",
+      name: "The Mother",
+      descriptor: "transformation engine",
+      want: "transform",
+      thinksWith: "instinct"
+    },
+    {
+      id: "hinton",
+      name: "Hinton",
+      descriptor: "rogue android",
+      want: "ascend",
+      thinksWith: "curiosity"
+    },
+    {
+      id: "shore",
+      name: "Shore",
+      descriptor: "sleeper android",
+      want: "retrieve Hinton’s logic core",
+      thinksWith: "programming"
+    },
+    {
+      id: "maas",
+      name: "Maas",
+      descriptor: "company suit",
+      want: "retrieve assets",
+      thinksWith: "his ledger",
+      location: "orbital company ship"
+    },
+    {
+      id: "valdez",
+      name: "Valdez",
+      descriptor: "marine sergeant",
+      want: "protect her people",
+      thinksWith: "duty"
+    },
+    {
+      id: "edom",
+      name: "Dr. Edom",
+      descriptor: "colony researcher",
+      want: "understand",
+      thinksWith: "wonder",
+      status: "dead"
+    },
+    {
+      id: "brookman",
+      name: "Brookman",
+      descriptor: "medic",
+      want: "escape",
+      thinksWith: "fear"
+    },
+    {
+      id: "weaver",
+      name: "Weaver",
+      descriptor: "infected commando",
+      want: "hide his secret",
+      thinksWith: "desperation"
+    }
+  ],
+
+  locations: [
+    { id: "hangar",     name: "Hangar" },
+    { id: "stairwells", name: "Stairwells" },
+    { id: "reactor",    name: "Reactor" },
+    { id: "lab",        name: "Lab" },
+    { id: "alien-ship", name: "Alien ship in the mountain" },
+    { id: "dropship",   name: "Dropship" }
+  ],
+
+  roster: {
+    characters: [
+      { id: "pc-bud",       name: "Bud",     type: "PC",  role: "teamster" },
+      { id: "pc-rick",      name: "Rick",    type: "PC",  role: "marine" },
+      { id: "pc-tandy",     name: "Tandy",   type: "PC",  role: "scientist" },
+      { id: "pc-willis",    name: "Willis",  type: "PC",  role: "teamster" },
+      { id: "npc-valdez",   name: "Valdez",   type: "NPC" },
+      { id: "npc-hinton",   name: "Hinton",   type: "NPC" },
+      { id: "npc-shore",    name: "Shore",    type: "NPC" },
+      { id: "npc-maas",     name: "Maas",     type: "NPC" },
+      { id: "npc-brookman", name: "Brookman", type: "NPC" },
+      { id: "npc-weaver",   name: "Weaver",   type: "NPC" },
+      { id: "npc-edom",     name: "Dr. Edom", type: "NPC", status: "dead" }
+    ],
+    groups: [
+      { id: "alpha", name: "Alpha" },
+      { id: "bravo", name: "Bravo" }
+    ]
+  }
+};
+
+/* ==============================
+   IMPROV LIBRARY DATA
+   Edit only this section to change table content.
+   ==============================
+
+   Each top-level key is one category. The order of keys here
+   is the order of tabs in the UI.
+
+   Category shape:
+
+     myCategory: {
+       label:     "Display name",   // shown in tab + headings
+       group:     "Group name",     // optional kicker above the
+                                    //   tab label, e.g. "Carcinids"
+       type:      "list" | "moves" | "descriptors",
+       quickDraw: "Button label"    // optional. If present, adds a
+                                    //   quick-draw button at the top
+                                    //   of the panel.
+
+       // type === "list"   →   simple array of strings
+       items: ["entry one", "entry two", ...]
+
+       // type === "moves"  →   array of { move, use }
+       items: [
+         { move: "Do the thing", use: "Why/when to use it" },
+         ...
+       ]
+
+       // type === "descriptors"  →  object of named banks.
+       //   The "Generate" button picks one entry from each bank
+       //   and joins them with " / " into the latest draw.
+       banks: {
+         bankName:    ["item 1", "item 2", ...],
+         anotherBank: [...]
+       }
+     }
+
+   To add a new category, just add a new key — the UI picks it up
+   automatically. Nothing below this block needs to change.
+   ============================== */
+
+const IMPROV_LIBRARY = {
+
+  carcinidAdaptations: {
+    label: "Adaptation sparks",
+    group: "Carcinids",
+    type: "list",
+    quickDraw: "Carcinid detail",
+    items: [
+      "Their legs have changed length asymmetrically, letting them climb walls at impossible angles.",
+      "Their shells now carry patches of local moss, fungal mat, or wet mineral crust.",
+      "They pause before attacking, vibrating in response to nearby machinery or voices.",
+      "Their wounds do not bleed; they vent warm mist and fibrous strands.",
+      "One mimics the posture of a human it has watched, badly.",
+      "Their mandibles click in patterns that almost sound like repeated words.",
+      "They shed translucent skins that continue twitching after being abandoned.",
+      "Their eyes have clouded over; they now hunt by sound alone.",
+      "Their bodies show half-formed features from other local animals.",
+      "They move in coordinated bursts, as if receiving the same signal at once.",
+      "Their limbs split or reconfigure mid-pursuit to solve a terrain problem.",
+      "They ignore prey briefly to destroy lights, radios, speakers, or sensors."
+    ]
+  },
+
+  carcinidDescriptors: {
+    label: "Descriptor generator",
+    group: "Carcinids",
+    type: "descriptors",
+    quickDraw: "Carcinid descriptor",
+    banks: {
+      texture: [
+        "lacquered", "wet", "fibrous", "coral-like", "blistered",
+        "translucent", "calcified", "veined", "bark-skinned", "rubbery"
+      ],
+      movement: [
+        "stuttering", "flowing", "ratcheting", "unfolding", "skittering",
+        "dragging", "twitch-synchronized", "too still", "suddenly fast"
+      ],
+      sound: [
+        "glass-clicking", "throat-humming", "wet ticking", "bone-rattle",
+        "radio-chatter", "insect static", "breathy imitation", "shell-scrape"
+      ],
+      behavior: [
+        "listening", "learning", "testing doors", "avoiding fire",
+        "copying screams", "circling speakers", "protecting growths", "harvesting bodies"
+      ]
+    }
+  },
+
+  carcinidMoves: {
+    label: "Narrative moves",
+    group: "Carcinids",
+    type: "moves",
+    items: [
+      { move: "Cut off the obvious route",         use: "Make retreat or forward progress costly." },
+      { move: "Answer sound with motion",          use: "Teach players that noise is dangerous." },
+      { move: "Drag someone into the dark",        use: "Split attention without starting a full combat." },
+      { move: "Break the useful object",           use: "Target lights, radios, doors, lifts, medkits, fuel lines." },
+      { move: "Adapt to the last tactic",          use: "Make the second use of a trick less reliable." },
+      { move: "Reveal the environment is part of them", use: "Have vents, walls, mud, fungus, or carcasses respond." },
+      { move: "Herd the humans",                   use: "Make the players realize the attack is shaping their movement." },
+      { move: "Leave a changed survivor behind",   use: "Turn aftermath into horror and future pressure." },
+      { move: "Go still and listen",               use: "Make silence tense; force a choice about movement/noise." },
+      { move: "Sacrifice bodies to complete a purpose", use: "Show they are not just predators; they are terraforming tools." }
+    ]
+  },
+
+  mimicTells: {
+    label: "Uncanny tells",
+    group: "Mimic",
+    type: "list",
+    quickDraw: "Mimic tell",
+    items: [
+      "It uses someone's voice, but the emotional emphasis lands on the wrong words.",
+      "It smiles a fraction too late after speaking.",
+      "Its breathing does not match exertion, fear, or injury.",
+      "It remembers facts, but not relationships.",
+      "It stands in a familiar posture copied from someone else.",
+      "It blinks one eye slightly before the other.",
+      "Its clothes are correct from a distance, but wrongly fastened or inside out.",
+      "It has dried blood in places where there is no wound.",
+      "It repeats a phrase someone said earlier, now in a different context.",
+      "Its skin dimples or ripples when loud sound passes through the room.",
+      "It knows where it is going, but cannot convincingly explain why.",
+      "For one second under stress, its silhouette becomes something non-human."
+    ]
+  },
+
+  mimicMoves: {
+    label: "Narrative moves",
+    group: "Mimic",
+    type: "moves",
+    items: [
+      { move: "Wear a trusted shape",              use: "Make recognition itself dangerous." },
+      { move: "Exploit a recent memory",           use: "Have it use something the PCs just said or did." },
+      { move: "Ask for help at the worst moment",  use: "Force empathy vs suspicion." },
+      { move: "Pass through a human system",       use: "Use ID cards, voice access, comms, uniforms, distress calls." },
+      { move: "Become briefly perfect",            use: "Let it fool them completely for one beat." },
+      { move: "Become visibly wrong under stress", use: "Reward pressure, interrogation, injury, or loud sound." },
+      { move: "Turn the room against them",        use: "Lock doors, trigger alarms, vent atmosphere, misdirect cameras." },
+      { move: "Offer a true thing for a false reason", use: "Make it useful but untrustworthy." },
+      { move: "Steal the shape of consequence",    use: "Appear as someone the PCs failed, killed, abandoned, or trusted." },
+      { move: "Choose the strategic target, not the nearest prey", use: "Remind the GM it wants the tower/cure/signal, not a brawl." }
+    ]
+  },
+
+  softMoves: {
+    label: "Soft moves",
+    group: "General Pressure",
+    type: "list",
+    quickDraw: "Enemy move",
+    items: [
+      "Show signs of adaptation.",
+      "Separate one PC from the group.",
+      "Make a safe route unsafe.",
+      "Put a useful NPC in immediate danger.",
+      "Damage communications.",
+      "Turn a player's previous choice into a complication.",
+      "Reveal that something has learned from them.",
+      "Offer a clear opportunity with an ugly cost.",
+      "Make noise, light, heat, or blood matter.",
+      "Show that the environment is no longer passive."
+    ]
+  },
+
+  hardMoves: {
+    label: "Hard moves",
+    group: "General Pressure",
+    type: "list",
+    quickDraw: "Hard move",
+    items: [
+      "A route is permanently lost.",
+      "Someone is taken, copied, infected, or transformed.",
+      "The control tower loses one major function.",
+      "A cure sample or data source is damaged.",
+      "The dropship timeline advances.",
+      "A trusted NPC becomes suspect.",
+      "The enemy adapts to one successful player tactic.",
+      "The colony receives or broadcasts the wrong signal."
+    ]
+  }
+
+};
+
+/* =========================================================
+   DO NOT EDIT BELOW THIS LINE UNLESS CHANGING THE TEMPLATE
+   ========================================================= */
+
+(function () {
+  "use strict";
+
+  // -------- Utilities --------
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function slug(s) {
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "untitled";
+  }
+  function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const k in attrs) {
+        const v = attrs[k];
+        if (v == null || v === false) continue;
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else if (k === "html") node.innerHTML = v;
+        else if (k.startsWith("on") && typeof v === "function") {
+          node.addEventListener(k.slice(2).toLowerCase(), v);
+        } else if (k === "dataset") {
+          for (const dk in v) node.dataset[dk] = v[dk];
+        } else if (v === true) {
+          node.setAttribute(k, "");
+        } else {
+          node.setAttribute(k, v);
+        }
+      }
+    }
+    if (children) {
+      (Array.isArray(children) ? children : [children]).forEach(c => {
+        if (c == null || c === false) return;
+        if (typeof c === "string" || typeof c === "number") {
+          node.appendChild(document.createTextNode(String(c)));
+        } else {
+          node.appendChild(c);
+        }
+      });
+    }
+    return node;
+  }
+  function isPlaceholderText(s) {
+    if (!s) return false;
+    return /^\s*\[.*\]\s*$/.test(s);
+  }
+  function clamp(n, lo, hi) {
+    if (typeof n !== "number" || isNaN(n)) return lo;
+    return Math.max(lo, Math.min(hi, n));
+  }
+  function nonEmpty(s) {
+    return typeof s === "string" && s.trim().length > 0;
+  }
+
+  // -------- Storage --------
+  const meta = (GM_SCREEN_DATA && GM_SCREEN_DATA.meta) || {};
+  const STORAGE_KEY = "gm-screen:" + slug(meta.campaignTitle) + ":" + slug(meta.sessionTitle);
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* quota or disabled — ignore */ }
+  }
+  function clearState() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  }
+
+  const state = loadState();
+  if (!state.omens || typeof state.omens !== "object") state.omens = {};
+  if (!state.roster || typeof state.roster !== "object") state.roster = {};
+  if (typeof state.notes !== "string") state.notes = "";
+  if (typeof state.spotlight !== "string") state.spotlight = "";
+  if (!state.improv || typeof state.improv !== "object") state.improv = {};
+  if (!Array.isArray(state.improv.pins)) state.improv.pins = [];
+  if (state.improv.latest && typeof state.improv.latest !== "object") state.improv.latest = null;
+  if (typeof state.improv.activeTab !== "string") state.improv.activeTab = "";
+
+  // -------- Header --------
+  function renderHeader() {
+    const root = $("#screenHeader");
+    root.innerHTML = "";
+
+    const titleBlock = el("div", { class: "title-block" }, [
+      el("h1", { text: meta.campaignTitle || "Untitled Campaign" })
+    ]);
+
+    const resetBtn = el("button", {
+      class: "btn danger",
+      type: "button",
+      title: "Clear stored omen positions, roster grouping, and notes.",
+      onclick: function () {
+        if (confirm("Reset session state?")) {
+          clearState();
+          location.reload();
+        }
+      },
+      text: "Reset session state"
+    });
+
+    root.appendChild(titleBlock);
+    root.appendChild(el("div", { class: "header-actions" }, [resetBtn]));
+  }
+
+  // -------- Truths --------
+  function renderTruths() {
+    const root = $("#truthsList");
+    root.innerHTML = "";
+    const truths = (GM_SCREEN_DATA.truths || []).filter(t => t && nonEmpty(t.title));
+    if (!truths.length) {
+      root.appendChild(el("div", { class: "empty", text: "No truths defined." }));
+      return;
+    }
+    truths.forEach((t, i) => {
+      root.appendChild(el("div", { class: "truth-cell" }, [
+        el("div", { class: "t-label", text: "Truth " + String(i + 1).padStart(2, "0") }),
+        el("div", { class: "t-title", text: t.title })
+      ]));
+    });
+  }
+
+  // -------- Perils --------
+  function renderPerils() {
+    const root = $("#perilsList");
+    root.innerHTML = "";
+    const perils = (GM_SCREEN_DATA.perils || []).filter(p => p && nonEmpty(p.name));
+    if (!perils.length) {
+      root.appendChild(el("div", { class: "empty", text: "No perils defined." }));
+      return;
+    }
+    perils.forEach(p => {
+      const id = nonEmpty(p.id) ? p.id : slug(p.name);
+      const omens = Array.isArray(p.omens) ? p.omens : [];
+      const stored = state.omens[id];
+      const defaultIdx = typeof p.currentOmenIndex === "number" ? p.currentOmenIndex : 0;
+      let idx = clamp(typeof stored === "number" ? stored : defaultIdx, 0, Math.max(0, omens.length - 1));
+
+      const row = el("article", {
+        class: "peril-row",
+        dataset: { perilId: id }
+      });
+
+      // ---- name column ----
+      const nameCell = el("div", { class: "peril-name-cell" });
+      nameCell.appendChild(el("h3", { class: "peril-name", text: p.name }));
+      if (nonEmpty(p.status)) {
+        nameCell.appendChild(el("div", { class: "peril-meta" }, [
+          el("span", { class: "status", text: p.status })
+        ]));
+      }
+      row.appendChild(el("div", { class: "peril-row-main" }, [nameCell]));
+
+      // ---- omens column ----
+      const main = row.querySelector(".peril-row-main");
+      const omensTrack = el("div", { class: "omens-track", role: "list" });
+      const posLabel = el("span", { class: "pos" });
+
+      function setIdx(i) {
+        if (!omens.length) return;
+        i = clamp(i, 0, omens.length - 1);
+        if (i === idx) return;
+        idx = i;
+        state.omens[id] = idx;
+        saveState();
+        renderOmens();
+        updatePos();
+      }
+      function renderOmens() {
+        omensTrack.innerHTML = "";
+        if (!omens.length) {
+          omensTrack.appendChild(el("span", { class: "empty", text: "No omens." }));
+          return;
+        }
+        omens.forEach((o, i) => {
+          const text = (o && nonEmpty(o.text)) ? o.text : "(unwritten)";
+          const placeholder = isPlaceholderText(text);
+          let cls = "omen ";
+          if (i < idx) cls += "omen-past";
+          else if (i === idx) cls += "omen-current";
+          else cls += "omen-future";
+          if (placeholder) cls += " placeholder";
+
+          const btn = el("button", {
+            type: "button",
+            class: cls,
+            dataset: { index: String(i) },
+            title: i === idx ? "Click to advance" : "Click to set as current",
+            "aria-current": i === idx ? "true" : "false",
+            onclick: function () {
+              if (i === idx) {
+                if (idx < omens.length - 1) setIdx(idx + 1);
+              } else {
+                setIdx(i);
+              }
+            }
+          }, [
+            el("span", { class: "omen-text", text: text }),
+            (o && nonEmpty(o.note)) ? el("span", { class: "omen-note", text: o.note }) : null
+          ]);
+          omensTrack.appendChild(btn);
+          if (i < omens.length - 1) {
+            omensTrack.appendChild(el("span", { class: "omen-sep", text: "›" }));
+          }
+        });
+      }
+      function updatePos() {
+        posLabel.innerHTML = "";
+        if (!omens.length) { return; }
+        const cur = document.createElement("span");
+        cur.className = "cur";
+        cur.textContent = String(idx + 1);
+        posLabel.appendChild(cur);
+        posLabel.appendChild(document.createTextNode(" / " + omens.length));
+      }
+      renderOmens();
+      main.appendChild(omensTrack);
+
+      // ---- controls column ----
+      const prev = el("button", {
+        class: "btn icon subtle", type: "button",
+        "aria-label": "Previous omen", title: "Previous omen",
+        text: "←",
+        onclick: function () { setIdx(idx - 1); }
+      });
+      const next = el("button", {
+        class: "btn icon subtle", type: "button",
+        "aria-label": "Next omen", title: "Next omen",
+        text: "→",
+        onclick: function () { setIdx(idx + 1); }
+      });
+      updatePos();
+      main.appendChild(el("div", { class: "peril-controls" }, [prev, posLabel, next]));
+
+      root.appendChild(row);
+    });
+  }
+
+  // -------- Entities --------
+  function renderEntities() {
+    const root = $("#entitiesList");
+    root.innerHTML = "";
+    const entities = (GM_SCREEN_DATA.entities || []).filter(e => e && nonEmpty(e.name));
+    if (!entities.length) {
+      root.appendChild(el("div", { class: "empty", text: "No entities defined." }));
+      return;
+    }
+    entities.forEach(e => {
+      const id = nonEmpty(e.id) ? e.id : slug(e.name);
+      const card = el("article", {
+        class: "entity-card",
+        dataset: nonEmpty(e.status) ? { entityId: id, status: e.status } : { entityId: id }
+      });
+
+      const head = el("header", { class: "entity-head" }, [
+        el("span", { class: "entity-name", text: e.name }),
+        nonEmpty(e.descriptor) ? el("span", { class: "entity-descriptor", text: e.descriptor }) : null
+      ]);
+      if (nonEmpty(e.status)) {
+        head.appendChild(el("span", { class: "entity-status", text: e.status }));
+      } else if (nonEmpty(e.location)) {
+        head.appendChild(el("span", { class: "entity-location", text: e.location }));
+      }
+      card.appendChild(head);
+
+      const fields = el("div", { class: "entity-fields" });
+      const rows = [
+        { label: "wants",  value: e.want },
+        { label: "thinks", value: e.thinksWith }
+      ];
+      if (nonEmpty(e.status) && nonEmpty(e.location)) {
+        rows.push({ label: "at", value: e.location });
+      }
+      let appended = 0;
+      rows.forEach(r => {
+        if (!nonEmpty(r.value)) return;
+        fields.appendChild(el("div", { class: "label", text: r.label }));
+        fields.appendChild(el("div", { class: "value", text: r.value }));
+        appended++;
+      });
+      if (appended > 0) card.appendChild(fields);
+
+      if (Array.isArray(e.tags) && e.tags.length) {
+        card.appendChild(el("div", { class: "entity-tags" },
+          e.tags.filter(nonEmpty).map(t => el("span", { class: "entity-tag", text: t }))
+        ));
+      }
+
+      root.appendChild(card);
+    });
+  }
+
+  // -------- Locations --------
+  function renderLocations() {
+    const root = $("#locationsList");
+    root.innerHTML = "";
+    const locs = (GM_SCREEN_DATA.locations || []).filter(l => l && nonEmpty(l.name));
+    if (!locs.length) {
+      root.appendChild(el("div", { class: "empty", text: "No locations defined." }));
+      return;
+    }
+    locs.forEach(l => {
+      const chip = el("span", {
+        class: "location-chip",
+        title: nonEmpty(l.notes) ? l.notes : null,
+        dataset: { hasNotes: nonEmpty(l.notes) ? "true" : "false" }
+      }, [
+        el("span", { class: "loc-name", text: l.name }),
+        (Array.isArray(l.tags) && l.tags.length)
+          ? el("span", { class: "loc-tags" }, l.tags.filter(nonEmpty).map(t => el("span", { class: "loc-tag", text: "#" + t })))
+          : null
+      ]);
+      root.appendChild(chip);
+    });
+  }
+
+  // -------- Roster (drag-and-drop) --------
+  const POOL_ID = "__unassigned__";
+
+  function renderRoster() {
+    const root = $("#rosterRoot");
+    root.innerHTML = "";
+    const roster = GM_SCREEN_DATA.roster || {};
+    const chars = Array.isArray(roster.characters) ? roster.characters.filter(c => c && nonEmpty(c.name)) : [];
+    const groups = Array.isArray(roster.groups) ? roster.groups.filter(g => g && nonEmpty(g.name)) : [];
+
+    if (!chars.length && !groups.length) {
+      root.appendChild(el("div", { class: "empty", text: "No roster defined." }));
+      return;
+    }
+
+    const validGroupIds = new Set(groups.map(g => g.id));
+    chars.forEach(c => {
+      const id = nonEmpty(c.id) ? c.id : slug(c.name + "-" + (c.type || ""));
+      c.__id = id;
+      const assigned = state.roster[id];
+      if (assigned && assigned !== POOL_ID && !validGroupIds.has(assigned)) {
+        state.roster[id] = POOL_ID;
+      }
+    });
+
+    function charsForGroup(groupId) {
+      return chars.filter(c => {
+        const a = state.roster[c.__id];
+        if (groupId === POOL_ID) return !a || a === POOL_ID;
+        return a === groupId;
+      });
+    }
+
+    function buildGroupNode(group, isPool) {
+      const node = el("div", {
+        class: "roster-group",
+        dataset: { groupId: group.id, pool: isPool ? "true" : "false" }
+      });
+      const titleRow = el("h3", { class: "roster-group-title" }, [
+        el("span", { text: isPool ? "Unassigned" : group.name }),
+        el("span", { class: "count", dataset: { role: "count" }, text: "0" })
+      ]);
+      const chips = el("div", { class: "roster-chips", dataset: { role: "chips" } });
+      node.appendChild(titleRow);
+      node.appendChild(chips);
+
+      node.addEventListener("dragover", function (ev) {
+        ev.preventDefault();
+        try { ev.dataTransfer.dropEffect = "move"; } catch (_) {}
+        node.classList.add("drop-target");
+      });
+      node.addEventListener("dragleave", function (ev) {
+        if (ev.target === node) node.classList.remove("drop-target");
+      });
+      node.addEventListener("drop", function (ev) {
+        ev.preventDefault();
+        node.classList.remove("drop-target");
+        const charId = ev.dataTransfer && ev.dataTransfer.getData("text/plain");
+        if (!charId) return;
+        const newGroup = group.id;
+        if (state.roster[charId] === newGroup) return;
+        state.roster[charId] = newGroup;
+        saveState();
+        refreshChips();
+        renderSpotlight();
+      });
+
+      return { node: node, chipsBox: chips, countEl: $('[data-role="count"]', titleRow) };
+    }
+
+    const orderedGroups = [{ id: POOL_ID, name: "Unassigned" }].concat(groups);
+    const groupNodes = {};
+    orderedGroups.forEach(g => {
+      const built = buildGroupNode(g, g.id === POOL_ID);
+      groupNodes[g.id] = built;
+      root.appendChild(built.node);
+    });
+
+    function makeChip(c) {
+      const chip = el("div", {
+        class: "char-chip",
+        draggable: "true",
+        dataset: {
+          charId: c.__id,
+          type: c.type || "",
+          status: nonEmpty(c.status) ? c.status : ""
+        }
+      }, [
+        el("span", { class: "char-name", text: c.name }),
+        nonEmpty(c.role) ? el("span", { class: "char-role", text: c.role }) : null,
+        nonEmpty(c.status) ? el("span", { class: "char-status", text: c.status }) : null,
+        el("span", { class: "char-type", text: (c.type || "?").toUpperCase() })
+      ]);
+      chip.addEventListener("dragstart", function (ev) {
+        try {
+          ev.dataTransfer.effectAllowed = "move";
+          ev.dataTransfer.setData("text/plain", c.__id);
+        } catch (_) {}
+        chip.classList.add("dragging");
+      });
+      chip.addEventListener("dragend", function () {
+        chip.classList.remove("dragging");
+        $$(".roster-group.drop-target").forEach(n => n.classList.remove("drop-target"));
+      });
+      return chip;
+    }
+
+    function refreshChips() {
+      orderedGroups.forEach(g => {
+        const built = groupNodes[g.id];
+        built.chipsBox.innerHTML = "";
+        const items = charsForGroup(g.id);
+        items.forEach(c => built.chipsBox.appendChild(makeChip(c)));
+        built.countEl.textContent = String(items.length);
+        if (!items.length) {
+          const ph = el("div", { class: "empty", text: g.id === POOL_ID ? "Everyone’s assigned." : "Drop here." });
+          built.chipsBox.appendChild(ph);
+        }
+      });
+    }
+
+    refreshChips();
+  }
+
+  // -------- Spotlight (active team carousel) --------
+  function getRosterChars() {
+    const roster = GM_SCREEN_DATA.roster || {};
+    const chars = Array.isArray(roster.characters) ? roster.characters.filter(c => c && nonEmpty(c.name)) : [];
+    chars.forEach(c => {
+      if (!c.__id) c.__id = nonEmpty(c.id) ? c.id : slug(c.name + "-" + (c.type || ""));
+    });
+    return chars;
+  }
+  function getSpotlightStops() {
+    const roster = GM_SCREEN_DATA.roster || {};
+    const groups = Array.isArray(roster.groups) ? roster.groups.filter(g => g && nonEmpty(g.name)) : [];
+    return groups.slice().concat([{ id: POOL_ID, name: "Unassigned" }]);
+  }
+  function renderSpotlight() {
+    const root = $("#spotlightPanel");
+    if (!root) return;
+    root.innerHTML = "";
+    const stops = getSpotlightStops();
+    const chars = getRosterChars();
+
+    if (!stops.length) {
+      root.appendChild(el("div", { class: "spotlight-empty", text: "No teams defined." }));
+      return;
+    }
+
+    let spotIdx = stops.findIndex(g => g.id === state.spotlight);
+    if (spotIdx < 0) spotIdx = 0;
+    const current = stops[spotIdx];
+    state.spotlight = current.id;
+
+    const isPool = current.id === POOL_ID;
+    root.dataset.pool = isPool ? "true" : "false";
+
+    const prevBtn = el("button", {
+      class: "spotlight-nav", type: "button",
+      "aria-label": "Previous team", title: "Previous team",
+      text: "←",
+      onclick: function () {
+        const i = (spotIdx - 1 + stops.length) % stops.length;
+        state.spotlight = stops[i].id;
+        saveState();
+        renderSpotlight();
+      }
+    });
+    const nextBtn = el("button", {
+      class: "spotlight-nav", type: "button",
+      "aria-label": "Next team", title: "Next team",
+      text: "→",
+      onclick: function () {
+        const i = (spotIdx + 1) % stops.length;
+        state.spotlight = stops[i].id;
+        saveState();
+        renderSpotlight();
+      }
+    });
+    if (stops.length <= 1) {
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+    }
+
+    const members = chars.filter(c => {
+      const a = state.roster[c.__id];
+      if (isPool) return !a || a === POOL_ID;
+      return a === current.id;
+    });
+
+    const countText = members.length + (members.length === 1 ? " member" : " members");
+    const nameWrap = el("div", { class: "spotlight-name-wrap" }, [
+      el("span", { class: "spotlight-kicker", text: isPool ? "Pool" : "Spotlight team" }),
+      el("h3", { class: "spotlight-name", text: current.name }),
+      el("span", { class: "spotlight-count", text: countText })
+    ]);
+
+    root.appendChild(el("div", { class: "spotlight-head" }, [prevBtn, nameWrap, nextBtn]));
+
+    if (stops.length > 1) {
+      const dots = el("div", { class: "spotlight-dots" });
+      stops.forEach((s, i) => {
+        dots.appendChild(el("button", {
+          class: "spotlight-dot",
+          type: "button",
+          "aria-label": "Switch spotlight to " + s.name,
+          title: s.name,
+          dataset: { active: i === spotIdx ? "true" : "false" },
+          onclick: function () {
+            state.spotlight = s.id;
+            saveState();
+            renderSpotlight();
+          }
+        }));
+      });
+      root.appendChild(dots);
+    }
+
+    if (!members.length) {
+      root.appendChild(el("div", {
+        class: "spotlight-empty",
+        text: isPool ? "Everyone’s assigned." : "Nobody on this team yet."
+      }));
+      if (!isPool) {
+        root.appendChild(el("div", { class: "spotlight-hint", text: "Drag people into this team from the roster below." }));
+      }
+    } else {
+      const list = el("ul", { class: "spotlight-members" });
+      members.forEach(c => {
+        const ds = { type: c.type || "" };
+        if (nonEmpty(c.status)) ds.status = c.status;
+        list.appendChild(el("li", { class: "spotlight-member", dataset: ds }, [
+          el("span", { class: "sm-type", text: (c.type || "?").toUpperCase() }),
+          el("span", { class: "sm-name", text: c.name }),
+          nonEmpty(c.role) ? el("span", { class: "sm-role", text: c.role }) : null,
+          nonEmpty(c.status) ? el("span", { class: "sm-status", text: c.status }) : null
+        ]));
+      });
+      root.appendChild(list);
+    }
+  }
+
+  // -------- Notes --------
+  function renderNotes() {
+    const area = $("#notesArea");
+    area.value = state.notes || "";
+    let saveTimer = null;
+    area.addEventListener("input", function () {
+      state.notes = area.value;
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveState, 200);
+    });
+  }
+
+  /* =========================================================
+     IMPROV LIBRARY RENDERING
+     Usually do not edit below this line. Edit data in the
+     IMPROV_LIBRARY block above instead.
+     ========================================================= */
+
+  function pickRandom(arr) {
+    if (!Array.isArray(arr) || !arr.length) return null;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  function genPinId() {
+    return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return true;
+    } catch (_) { return false; }
+  }
+  function flashButton(btn, label) {
+    if (!btn) return;
+    const prev = btn.textContent;
+    btn.textContent = label;
+    setTimeout(function () { if (btn.textContent === label) btn.textContent = prev; }, 900);
+  }
+
+  function categoriesList() {
+    const lib = (typeof IMPROV_LIBRARY === "object" && IMPROV_LIBRARY) || {};
+    return Object.keys(lib).map(k => ({ key: k, cat: lib[k] })).filter(x => x.cat);
+  }
+  function categoryByKey(key) {
+    const lib = (typeof IMPROV_LIBRARY === "object" && IMPROV_LIBRARY) || {};
+    return lib[key] || null;
+  }
+  function drawText(key) {
+    const cat = categoryByKey(key);
+    if (!cat) return null;
+    if (cat.type === "list" && Array.isArray(cat.items)) {
+      const it = pickRandom(cat.items);
+      if (typeof it === "string") return it;
+      if (it && it.move) return it.move + (it.use ? " \u2014 " + it.use : "");
+      return null;
+    }
+    if (cat.type === "moves" && Array.isArray(cat.items)) {
+      const it = pickRandom(cat.items);
+      if (!it) return null;
+      return it.move + (it.use ? " \u2014 " + it.use : "");
+    }
+    if (cat.type === "descriptors" && cat.banks) {
+      const parts = [];
+      Object.keys(cat.banks).forEach(b => {
+        const v = pickRandom(cat.banks[b]);
+        if (v) parts.push(v);
+      });
+      return parts.length ? parts.join(" / ") : null;
+    }
+    return null;
+  }
+
+  function setLatest(key, text, opts) {
+    if (!text) return;
+    state.improv.latest = { categoryKey: key, text: text, ts: Date.now() };
+    saveState();
+    const panel = $("#improvPanel");
+    if (!panel) return;
+    const stage = panel.querySelector(".improv-stage");
+    if (stage) {
+      const fresh = buildLatest();
+      if (opts && opts.flash) fresh.classList.add("flash");
+      stage.replaceChild(fresh, stage.firstElementChild);
+    }
+    refreshHighlights();
+  }
+  function pinLatest() {
+    const cur = state.improv.latest;
+    if (!cur || !cur.text) return;
+    addPin(cur.categoryKey, cur.text);
+  }
+  function addPin(key, text) {
+    if (!text) return;
+    // De-duplicate: bump existing identical pin to top instead of adding twice.
+    state.improv.pins = state.improv.pins.filter(p => !(p.categoryKey === key && p.text === text));
+    state.improv.pins.unshift({ id: genPinId(), categoryKey: key, text: text, ts: Date.now() });
+    if (state.improv.pins.length > 50) state.improv.pins.length = 50;
+    saveState();
+    refreshPins();
+  }
+  function removePin(id) {
+    state.improv.pins = state.improv.pins.filter(p => p.id !== id);
+    saveState();
+    refreshPins();
+  }
+  function clearPins() {
+    state.improv.pins = [];
+    saveState();
+    refreshPins();
+  }
+  function refreshPins() {
+    const stage = document.querySelector("#improvPanel .improv-stage");
+    if (!stage) return;
+    stage.replaceChild(buildPins(), stage.lastElementChild);
+  }
+  function refreshHighlights() {
+    const cur = state.improv.latest;
+    const body = document.querySelector("#improvPanel .improv-body");
+    if (!body) return;
+    $$(".improv-item, .improv-move, .improv-bank-chip", body).forEach(n => n.classList.remove("highlighted"));
+    if (!cur || !cur.text) return;
+    // Only highlight when the current latest comes from the visible category.
+    if (cur.categoryKey !== state.improv.activeTab) return;
+    $$("[data-text]", body).forEach(n => {
+      if (n.getAttribute("data-text") === cur.text) n.classList.add("highlighted");
+    });
+  }
+
+  function buildLatest() {
+    const node = el("div", { class: "improv-latest" });
+    const cur = state.improv.latest;
+    if (!cur || !cur.text) {
+      node.appendChild(el("div", { class: "improv-latest-kicker" }, [
+        el("span", { text: "Latest draw" })
+      ]));
+      node.appendChild(el("div", {
+        class: "improv-latest-text empty",
+        text: "Nothing drawn yet \u2014 hit a quick-draw above, or tap an entry below."
+      }));
+      return node;
+    }
+    const cat = categoryByKey(cur.categoryKey) || {};
+    const sourceParts = [];
+    if (cat.group) sourceParts.push(cat.group);
+    if (cat.label) sourceParts.push(cat.label);
+    node.appendChild(el("div", { class: "improv-latest-kicker" }, [
+      el("span", { text: "Latest draw" }),
+      el("span", { class: "sep", text: "\u203A" }),
+      el("span", { class: "source", text: sourceParts.join(" \u00B7 ") || "draw" })
+    ]));
+    node.appendChild(el("div", { class: "improv-latest-text", text: cur.text }));
+
+    const drawAgain = el("button", {
+      class: "btn", type: "button", text: "Draw again",
+      onclick: function () {
+        const next = drawText(cur.categoryKey);
+        if (next) setLatest(cur.categoryKey, next, { flash: true });
+      }
+    });
+    const pinBtn = el("button", {
+      class: "btn", type: "button", text: "Pin",
+      onclick: function () { pinLatest(); flashButton(this, "Pinned"); }
+    });
+    const copyBtn = el("button", {
+      class: "btn", type: "button", text: "Copy",
+      onclick: function () { if (copyToClipboard(cur.text)) flashButton(this, "Copied"); }
+    });
+    const gotoBtn = el("button", {
+      class: "btn subtle", type: "button", text: "Open category",
+      onclick: function () {
+        if (state.improv.activeTab !== cur.categoryKey) {
+          state.improv.activeTab = cur.categoryKey;
+          saveState();
+          renderImprov();
+        }
+      }
+    });
+    node.appendChild(el("div", { class: "improv-latest-actions" }, [drawAgain, pinBtn, copyBtn, gotoBtn]));
+    return node;
+  }
+
+  function buildPins() {
+    const node = el("div", { class: "improv-pins" });
+    const pins = state.improv.pins || [];
+    const head = el("div", { class: "improv-pins-head" }, [
+      el("span", { text: "Pinned" + (pins.length ? " \u00B7 " + pins.length : "") }),
+      pins.length ? el("button", {
+        class: "btn subtle", type: "button", text: "Clear",
+        onclick: clearPins
+      }) : null
+    ]);
+    node.appendChild(head);
+    const list = el("div", { class: "improv-pins-list" });
+    if (!pins.length) {
+      list.appendChild(el("div", { class: "improv-pins-empty", text: "Nothing pinned. Pin a draw to keep it on screen." }));
+    } else {
+      pins.forEach(p => {
+        const cat = categoryByKey(p.categoryKey) || {};
+        const kicker = [cat.group, cat.label].filter(Boolean).join(" \u00B7 ") || "pinned";
+        list.appendChild(el("div", { class: "improv-pin" }, [
+          el("div", { class: "improv-pin-body" }, [
+            el("div", { class: "improv-pin-kicker", text: kicker }),
+            el("div", { class: "improv-pin-text", text: p.text })
+          ]),
+          el("button", {
+            class: "improv-pin-close", type: "button",
+            "aria-label": "Unpin", title: "Unpin", text: "\u00D7",
+            onclick: function () { removePin(p.id); }
+          })
+        ]));
+      });
+    }
+    node.appendChild(list);
+    return node;
+  }
+
+  function buildQuickbar() {
+    const bar = el("div", { class: "improv-quickbar" });
+    bar.appendChild(el("span", { class: "improv-quickbar-label", text: "Quick draw" }));
+    categoriesList().forEach(({ key, cat }) => {
+      if (!cat.quickDraw) return;
+      bar.appendChild(el("button", {
+        class: "improv-draw-btn", type: "button", text: cat.quickDraw,
+        title: "Draw from " + (cat.label || key),
+        onclick: function () {
+          const t = drawText(key);
+          if (t) setLatest(key, t, { flash: true });
+        }
+      }));
+    });
+    bar.appendChild(el("span", { class: "improv-quickbar-spacer" }));
+    bar.appendChild(el("button", {
+      class: "improv-draw-btn primary", type: "button", text: "Draw from all",
+      title: "Pick a random category, then draw from it",
+      onclick: function () {
+        const cats = categoriesList();
+        if (!cats.length) return;
+        const choice = pickRandom(cats);
+        const t = drawText(choice.key);
+        if (t) setLatest(choice.key, t, { flash: true });
+      }
+    }));
+    return bar;
+  }
+
+  function buildTabs(activeKey) {
+    const tabs = el("div", { class: "improv-tabs", role: "tablist" });
+    categoriesList().forEach(({ key, cat }) => {
+      tabs.appendChild(el("button", {
+        class: "improv-tab", type: "button", role: "tab",
+        dataset: {
+          active: (key === activeKey) ? "true" : "false",
+          group: cat.group || ""
+        },
+        onclick: function () {
+          if (state.improv.activeTab === key) return;
+          state.improv.activeTab = key;
+          saveState();
+          renderImprov();
+        }
+      }, [
+        cat.group ? el("span", { class: "improv-tab-group", text: cat.group }) : null,
+        el("span", { class: "improv-tab-label", text: cat.label || key })
+      ]));
+    });
+    return tabs;
+  }
+
+  function buildItemRow(key, text, num) {
+    const node = el("div", {
+      class: "improv-item",
+      dataset: { catKey: key, text: text },
+      onclick: function () { setLatest(key, text, { flash: true }); }
+    }, [
+      el("span", { class: "improv-item-num", text: num }),
+      el("span", { class: "improv-item-text", text: text }),
+      el("button", {
+        class: "pin-btn", type: "button", title: "Pin", "aria-label": "Pin",
+        html: "&#9826;",
+        onclick: function (ev) {
+          ev.stopPropagation();
+          addPin(key, text);
+          flashButton(this, "\u2605");
+          this.classList.add("pinned");
+        }
+      })
+    ]);
+    return node;
+  }
+
+  function buildMoveRow(key, item) {
+    const text = item.move + (item.use ? " \u2014 " + item.use : "");
+    return el("div", {
+      class: "improv-move",
+      dataset: { catKey: key, text: text },
+      onclick: function () { setLatest(key, text, { flash: true }); }
+    }, [
+      el("div", { class: "improv-move-body" }, [
+        el("div", { class: "improv-move-name", text: item.move }),
+        nonEmpty(item.use) ? el("div", { class: "improv-move-use", text: item.use }) : null
+      ]),
+      el("button", {
+        class: "pin-btn", type: "button", title: "Pin", "aria-label": "Pin",
+        html: "&#9826;",
+        onclick: function (ev) {
+          ev.stopPropagation();
+          addPin(key, text);
+          flashButton(this, "\u2605");
+          this.classList.add("pinned");
+        }
+      })
+    ]);
+  }
+
+  function buildBody(key) {
+    const body = el("div", { class: "improv-body" });
+    const cat = categoryByKey(key);
+    if (!cat) {
+      body.appendChild(el("div", { class: "empty", text: "Category not found." }));
+      return body;
+    }
+
+    const drawLabel = cat.type === "descriptors" ? "Generate"
+                    : cat.type === "moves" ? "Roll a move"
+                    : "Roll one";
+    const drawBtn = el("button", {
+      class: "improv-draw-btn primary", type: "button", text: drawLabel,
+      onclick: function () {
+        const t = drawText(key);
+        if (t) setLatest(key, t, { flash: true });
+      }
+    });
+
+    const titleParts = [];
+    if (cat.group) titleParts.push(cat.group);
+    titleParts.push(cat.label || key);
+    body.appendChild(el("div", { class: "improv-body-head" }, [
+      el("div", { class: "improv-body-title", text: titleParts.join(" \u00B7 ") }),
+      el("div", { class: "improv-body-actions" }, [drawBtn])
+    ]));
+
+    if (cat.type === "list" && Array.isArray(cat.items)) {
+      const grid = el("div", { class: "improv-items" });
+      cat.items.forEach((it, i) => {
+        const text = typeof it === "string" ? it : (it && it.move ? it.move : "");
+        if (!text) return;
+        grid.appendChild(buildItemRow(key, text, String(i + 1).padStart(2, "0")));
+      });
+      body.appendChild(grid);
+    } else if (cat.type === "moves" && Array.isArray(cat.items)) {
+      const grid = el("div", { class: "improv-moves" });
+      cat.items.forEach(it => {
+        if (!it || !nonEmpty(it.move)) return;
+        grid.appendChild(buildMoveRow(key, it));
+      });
+      body.appendChild(grid);
+    } else if (cat.type === "descriptors" && cat.banks) {
+      const wrap = el("div", { class: "improv-descriptors" });
+      Object.keys(cat.banks).forEach(bName => {
+        const arr = Array.isArray(cat.banks[bName]) ? cat.banks[bName] : [];
+        const bank = el("div", { class: "improv-bank" });
+        bank.appendChild(el("div", { class: "improv-bank-head" }, [
+          el("span", { text: bName }),
+          el("button", {
+            class: "improv-bank-roll", type: "button", text: "roll",
+            title: "Pick one from " + bName,
+            onclick: function () {
+              const v = pickRandom(arr);
+              if (v) setLatest(key, v, { flash: true });
+            }
+          })
+        ]));
+        const items = el("div", { class: "improv-bank-items" });
+        arr.forEach(v => {
+          items.appendChild(el("button", {
+            class: "improv-bank-chip", type: "button", text: v,
+            dataset: { text: v },
+            onclick: function () { setLatest(key, v, { flash: true }); }
+          }));
+        });
+        bank.appendChild(items);
+        wrap.appendChild(bank);
+      });
+      body.appendChild(wrap);
+    } else {
+      body.appendChild(el("div", { class: "empty", text: "Unknown category type." }));
+    }
+
+    return body;
+  }
+
+  function renderImprov() {
+    const root = $("#improvPanel");
+    if (!root) return;
+    root.innerHTML = "";
+    const cats = categoriesList();
+    if (!cats.length) {
+      root.appendChild(el("div", { class: "empty", text: "No improv content defined." }));
+      return;
+    }
+
+    // Resolve active tab against the current data.
+    const keys = cats.map(c => c.key);
+    let active = state.improv.activeTab;
+    if (!keys.includes(active)) active = keys[0];
+    state.improv.activeTab = active;
+
+    root.appendChild(buildQuickbar());
+
+    const stage = el("div", { class: "improv-stage" });
+    stage.appendChild(buildLatest());
+    stage.appendChild(buildPins());
+    root.appendChild(stage);
+
+    root.appendChild(buildTabs(active));
+    root.appendChild(buildBody(active));
+    refreshHighlights();
+  }
+
+  // -------- Boot --------
+  function renderAll() {
+    renderHeader();
+    renderTruths();
+    renderPerils();
+    renderSpotlight();
+    renderImprov();
+    renderEntities();
+    renderLocations();
+    renderRoster();
+    renderNotes();
+    document.title = (meta.campaignTitle || "GM Screen") +
+      (nonEmpty(meta.sessionTitle) ? " — " + meta.sessionTitle : "");
+  }
+  renderAll();
+})();
+</script>
+</body>
+</html>
