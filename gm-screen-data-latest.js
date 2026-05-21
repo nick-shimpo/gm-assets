@@ -15,10 +15,10 @@ window.GM_SCREEN_DATA = {
       id: "cure-is-lost",
       name: "The cure is lost",
       status: "Active",
-      currentOmenIndex: 2,
+      currentOmenIndex: 1,
       omens: [
         { text: "[Triggered] The cure has a name" },
-        { text: "[Triggered] Signs of the cure" },
+        { text: "Signs of the cure" },
         { text: "[Undefined]" }
       ]
     },
@@ -64,28 +64,6 @@ window.GM_SCREEN_DATA = {
         { text: "Something wearing the wrong shape is sighted moving toward the control tower" },
         { text: "[Undefined]" },
         { text: "[Undefined]" }
-      ]
-    },
-    {
-      id: "mimic-is-born",
-      name: "The mimic is born",
-      status: "Complete / retired",
-      currentOmenIndex: 2,
-      omens: [
-        { text: "[Triggered]" },
-        { text: "[Triggered]" },
-        { text: "[Triggered] The radiation returns" }
-      ]
-    },
-    {
-      id: "hangar-falls",
-      name: "The hangar falls",
-      status: "Complete / retired",
-      currentOmenIndex: 2,
-      omens: [
-        { text: "[Triggered]" },
-        { text: "[Triggered]" },
-        { text: "[Triggered] We’re out of time" }
       ]
     }
   ],
