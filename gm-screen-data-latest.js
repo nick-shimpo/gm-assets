@@ -5,8 +5,8 @@ window.GM_SCREEN_DATA = {
   },
 
   truths: [
-    { title: "Everything is changing" },
-    { title: "No rescue is coming" },
+    { title: "The infection rewrites life" },
+    { title: "No rescue is coming in time" },
     { title: "This will spread" }
   ],
 
@@ -31,17 +31,6 @@ window.GM_SCREEN_DATA = {
         { text: "[Triggered] He wasn’t where he was supposed to be" },
         { text: "He speaks their language" },
         { text: "[Undefined]" }
-      ]
-    },
-    {
-      id: "world-breathes-in",
-      name: "The world breathes in",
-      status: "Active",
-      currentOmenIndex: 0,
-      omens: [
-        { text: "The wildlife came in" },
-        { text: "Skin remembers" },
-        { text: "The whispers start" }
       ]
     },
     {
